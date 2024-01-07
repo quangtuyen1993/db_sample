@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:localdb/src/modules/common/domain/interfaces/warehouse_repository.dart';
 import 'package:localdb/src/modules/common/domain/warehouse.dart';
 import 'package:localdb/src/modules/common/domain/warehouse_fromto.dart';
-import 'package:localdb/src/modules/core/local/dao/wh_dao.dart';
 
 import 'src/modules/core/di/di_utils.dart';
 
@@ -61,10 +60,24 @@ class _MyHomePageState extends State<MyHomePage> {
       Warehouse.create(id: 11, name: 'wh 11'),
     ];
     await repo.addAll(list);
-    const fromTo = WareHouseFromToContractEntity(1, [2, 3, 4, 5, 6]);
-    const fromTo2 = WareHouseFromToContractEntity(1, [8, 3, 4, 5, 14]);
+    const fromTo = WareHouseFromToLinkEntity(1, 1);
+    const fromTo1 = WareHouseFromToLinkEntity(1, 2);
+    const fromTo2 = WareHouseFromToLinkEntity(1, 3);
+    const fromTo3 = WareHouseFromToLinkEntity(1, 4);
+    const fromTo4 = WareHouseFromToLinkEntity(3, 5);
     await repo.addFromTo(fromTo);
+    await repo.addFromTo(fromTo1);
     await repo.addFromTo(fromTo2);
+    await repo.addFromTo(fromTo3);
+    await repo.addFromTo(fromTo4);
+
+    final data = await repo.getFromTo();
+    for (final d in data) {
+      print('from ======> found ${d.name}');
+      final tos = await repo.getToByFromId(d.id);
+      final toNames = tos.map((e) => e.name);
+      print(toNames.join('|'));
+    }
   }
 
   @override

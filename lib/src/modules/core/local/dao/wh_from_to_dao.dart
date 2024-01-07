@@ -9,20 +9,31 @@ class WareHouseFromToDao extends BaseDao<WareHouseFromTosModel> {
   IsarCollection<WareHouseFromTosModel> get collection =>
       isar.wareHouseFromTosModels;
 
-  Future<int> insert(int fromId, List<int> to) {
+  Future<int> insert(int fromId, int toId) {
     return isar.writeTxn(() async {
       final from = WareHouseModel()..id = fromId;
-      final toList = to.map((e) {
-        return WareHouseModel()..id = e;
-      });
+      final to = WareHouseModel()..id = toId;
       final data = WareHouseFromTosModel()
-        ..id = fromId
         ..from.value = from
-        ..to.addAll(toList);
+        ..to.value = to;
       final result = await collection.put(data);
       await data.to.save();
       await data.from.save();
       return result;
     });
+  }
+
+  Future<List<WareHouseModel>> getFrom() async {
+    final from =
+        await isar.txn(await collection.where().distinctByFromId().findAll);
+    final data = from.map((e) => e.from.value!).toList();
+    return data;
+  }
+
+  Future<List<WareHouseModel>> getToByFromId(int fromId) async {
+    final to =
+        await isar.txn(collection.filter().fromIdEqualTo(fromId).findAll);
+    final data = to.map((e) => e.to.value!).toList();
+    return data;
   }
 }

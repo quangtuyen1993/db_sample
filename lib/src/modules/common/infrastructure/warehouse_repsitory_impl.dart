@@ -10,6 +10,7 @@ import 'package:localdb/src/modules/core/local/dao/wh_dao.dart';
 class WarehouseRepositoryImpl implements IWarehouseRepository {
   final WarehouseDao whDao;
   final WareHouseFromToDao whFtDao;
+
   const WarehouseRepositoryImpl(this.whDao, this.whFtDao);
 
   @override
@@ -19,9 +20,23 @@ class WarehouseRepositoryImpl implements IWarehouseRepository {
   }
 
   @override
-  Future<int> addFromTo(WareHouseFromToContract fromTo) {
+  Future<int> addFromTo(WareHouseFromToLink fromTo) {
     final from = fromTo.from;
     final to = fromTo.to;
     return whFtDao.insert(from, to);
+  }
+
+  @override
+  Future<List<Warehouse>> getFromTo() async {
+    final data = await whFtDao.getFrom();
+    final result = data.map((e) => e.toEntity()).toList();
+    return result;
+  }
+
+  @override
+  Future<List<Warehouse>> getToByFromId(int fromId) async {
+    final data = await whFtDao.getToByFromId(fromId);
+    final result = data.map((e) => e.toEntity()).toList();
+    return result;
   }
 }

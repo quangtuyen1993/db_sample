@@ -1,21 +1,36 @@
 import 'warehouse.dart';
 
-abstract class WareHouseFromTo {
+abstract interface class WareHouseFromTo {
   Warehouse get from;
 
-  List<Warehouse> get to;
+  Warehouse get to;
+
+  const factory WareHouseFromTo.create({
+    required Warehouse from,
+    required Warehouse to,
+  }) = WareHouseFromToEntity;
 }
 
-abstract class WareHouseFromToContract {
+abstract class WareHouseFromToLink {
   int get from;
 
-  List<int> get to;
+  int get to;
 }
 
-class WareHouseFromToContractEntity implements WareHouseFromToContract {
+class WareHouseFromToEntity implements WareHouseFromTo {
+  @override
+  final Warehouse from;
+  @override
+  final Warehouse to;
+
+  const WareHouseFromToEntity({required this.from, required this.to});
+}
+
+class WareHouseFromToLinkEntity implements WareHouseFromToLink {
   @override
   final int from;
   @override
-  final List<int> to;
-  const WareHouseFromToContractEntity(this.from, this.to);
+  final int to;
+
+  const WareHouseFromToLinkEntity(this.from, this.to);
 }
