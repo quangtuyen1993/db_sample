@@ -11,4 +11,5 @@ class WarehouseDao extends BaseDao<WareHouseModel> {
   Future<List<int>> addWarehouse(Iterable<WareHouseModel> models) async {
     return isar.writeTxn(() async => await collection.putAll(models.toList()));
   }
+
 }

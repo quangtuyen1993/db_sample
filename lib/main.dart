@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:localdb/src/modules/common/application/wh_cubit.dart';
+import 'package:localdb/src/modules/common/application/wh_worker_delegate.dart';
 import 'package:localdb/src/modules/common/domain/interfaces/warehouse_repository.dart';
 import 'package:localdb/src/modules/common/domain/warehouse.dart';
 import 'package:localdb/src/modules/common/domain/warehouse_fromto.dart';
@@ -46,35 +49,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future initDatabase() async {
     final repo = getIt<IWarehouseRepository>();
-    final list = [
-      Warehouse.create(id: 1, name: 'wh 1'),
-      Warehouse.create(id: 2, name: 'wh 2'),
-      Warehouse.create(id: 3, name: 'wh 3'),
-      Warehouse.create(id: 4, name: 'wh 4'),
-      Warehouse.create(id: 5, name: 'wh 5'),
-      Warehouse.create(id: 6, name: 'wh 6'),
-      Warehouse.create(id: 7, name: 'wh 7'),
-      Warehouse.create(id: 8, name: 'wh 8'),
-      Warehouse.create(id: 9, name: 'wh 9'),
-      Warehouse.create(id: 10, name: 'wh 10'),
-      Warehouse.create(id: 11, name: 'wh 11'),
-    ];
-    await repo.addAll(list);
-    const fromTo = WareHouseFromToLinkEntity(1, 1);
-    const fromTo1 = WareHouseFromToLinkEntity(1, 2);
-    const fromTo2 = WareHouseFromToLinkEntity(1, 3);
-    const fromTo3 = WareHouseFromToLinkEntity(1, 4);
-    const fromTo4 = WareHouseFromToLinkEntity(3, 5);
-    await repo.addFromTo(fromTo);
-    await repo.addFromTo(fromTo1);
-    await repo.addFromTo(fromTo2);
-    await repo.addFromTo(fromTo3);
-    await repo.addFromTo(fromTo4);
+    final whs = <Warehouse>[];
+    for (var i = 0; i <= 100; i++) {
+      final object = Warehouse.create(id: i, name: 'wh $i');
+      whs.add(object);
+    }
 
-    final data = await repo.getFromTo();
+    await repo.addAll(whs);
+
+    for (var i = 0; i <= 100; i++) {
+      final object = WareHouseFromToLinkEntity(1, i + 1);
+      await repo.addFromTo(object);
+    }
+
+    final data = await repo.getFromSource();
     for (final d in data) {
       print('from ======> found ${d.name}');
-      final tos = await repo.getToByFromId(d.id);
+      final tos = await repo.getToSourceByFromId(d.id);
       final toNames = tos.map((e) => e.name);
       print(toNames.join('|'));
     }
@@ -83,20 +74,86 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-          ],
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(widget.title),
         ),
+        body: BlocProvider<WareHouseCubit>(
+          create: (_) => getIt<WareHouseCubit>(
+              param1: getIt<WareHouseFromToDelegateImpl>()),
+          child: BlocBuilder<WareHouseCubit, WareHouseState>(
+              builder: (context, state) {
+            return Center(
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: DropdownButtonExample(
+                      source: state.sourceFrom,
+                      value: state.from,
+                      valueChanged: (t) =>
+                          context.read<WareHouseCubit>().selectedWhFrom(t),
+                      itemBuilder: (context, v) {
+                        return Text(v.name);
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: DropdownButtonExample(
+                      source: state.sourceTo,
+                      value: state.to,
+                      valueChanged: (t) =>
+                          context.read<WareHouseCubit>().selectedWhTo(t),
+                      itemBuilder: (context, v) {
+                        return Text(
+                          v.name,
+                          textAlign: TextAlign.center,
+                        );
+                      },
+                    ),
+                  )
+                ],
+              ),
+            );
+          }),
+        ));
+  }
+}
+
+typedef ItemBuilder<T> = Widget Function(BuildContext context, T t);
+
+class DropdownButtonExample<T> extends StatelessWidget {
+  const DropdownButtonExample({
+    super.key,
+    required this.source,
+    required this.valueChanged,
+    required this.itemBuilder,
+    this.value,
+  });
+
+  final List<T> source;
+  final T? value;
+  final ValueChanged<T?> valueChanged;
+  final ItemBuilder<T> itemBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButton<T>(
+      value: value,
+      alignment: Alignment.bottomLeft,
+      icon: const Icon(Icons.arrow_downward),
+      elevation: 16,
+      style: const TextStyle(color: Colors.deepPurple),
+      underline: Container(
+        height: 2,
+        color: Colors.deepPurpleAccent,
       ),
+      items: source.map<DropdownMenuItem<T>>((T value) {
+        return DropdownMenuItem<T>(
+          value: value,
+          child: itemBuilder.call(context, value),
+        );
+      }).toList(),
+      onChanged: source.isEmpty ? null : valueChanged.call,
     );
   }
 }

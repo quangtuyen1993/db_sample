@@ -1,6 +1,8 @@
 import 'package:isar/isar.dart';
+
 import 'package:localdb/src/modules/core/local/base_dao.dart';
 import 'package:localdb/src/modules/core/local/model/wh.dart';
+import 'package:localdb/src/modules/utils/collection_x.dart';
 
 class WareHouseFromToDao extends BaseDao<WareHouseFromTosModel> {
   const WareHouseFromToDao(super.isar);
@@ -24,16 +26,18 @@ class WareHouseFromToDao extends BaseDao<WareHouseFromTosModel> {
   }
 
   Future<List<WareHouseModel>> getFrom() async {
-    final from =
-        await isar.txn(await collection.where().distinctByFromId().findAll);
-    final data = from.map((e) => e.from.value!).toList();
+    final from = await isar.txn(
+      collection.where().sortByFromId().distinctByFromId().findAll,
+    );
+    final data = from.mapNotNull<WareHouseModel>((e) => e.from.value).toList();
     return data;
   }
 
   Future<List<WareHouseModel>> getToByFromId(int fromId) async {
-    final to =
-        await isar.txn(collection.filter().fromIdEqualTo(fromId).findAll);
-    final data = to.map((e) => e.to.value!).toList();
+    final to = await isar.txn(
+      collection.filter().fromIdEqualTo(fromId).sortByFromId().findAll,
+    );
+    final data = to.mapNotNull((e) => e.to.value).toList();
     return data;
   }
 }

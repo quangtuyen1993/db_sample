@@ -27,14 +27,14 @@ class WarehouseRepositoryImpl implements IWarehouseRepository {
   }
 
   @override
-  Future<List<Warehouse>> getFromTo() async {
+  Future<List<Warehouse>> getFromSource() async {
     final data = await whFtDao.getFrom();
     final result = data.map((e) => e.toEntity()).toList();
     return result;
   }
 
   @override
-  Future<List<Warehouse>> getToByFromId(int fromId) async {
+  Future<List<Warehouse>> getToSourceByFromId(int fromId) async {
     final data = await whFtDao.getToByFromId(fromId);
     final result = data.map((e) => e.toEntity()).toList();
     return result;
